@@ -11,7 +11,7 @@
   var Wind = function (options) {
       
       this._fps = options.fps || 30;
-      this._mPerFrame = Math.floor(1000 / this._fps); // frame per milliseconds
+      this._mPerFrame = Math.floor(1000 / this._fps);
       
       this._fCurrent = -1;
       this._timer = null;
