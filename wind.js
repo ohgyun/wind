@@ -11,7 +11,7 @@
   var Wind = function (options) {
       
       this._fps = options.fps || 30;
-      this._mPerFrame = Math.floor(1000 / this._fps);
+      this._mPerFrame = Math.floor(1000 / this._fps) || 1;
       
       this._fCurrent = -1;
       this._timer = null;
@@ -24,9 +24,7 @@
     wp = Wind.prototype;
     
   wp.play = function () {
-    var self = this,
-      mStart = new Date().getTime();
-    
+    var mStart = new Date().getTime();
     this._playFrame(mStart);
   };
 
@@ -92,7 +90,7 @@
    * @param {function(currentFrame)} callback function
    * @param {object} context
    */
-  wp.on = function (callback, context) {
+  wp.every = function (callback, context) {
     this._callbackObjects.push({
       handler : callback,
       context : context || this
