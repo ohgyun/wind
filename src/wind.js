@@ -34,7 +34,7 @@
         fps: options.fps || 30,
         startFrame: options.startFrame || 0,
         endFrame: options.endFrame || 300,
-        loop: options || false
+        loop: options.loop || false
       };    
     
       this._loop = options.loop;
@@ -59,10 +59,12 @@
   wp.playFrame = function () {
     var fCurrent = this._frameManager.getFrameAtCurrentTime();
     
-    this.goTo(fCurrent);
+    if (this._frameManager.isValidFrame(fCurrent)) {
+      this.goTo(fCurrent);
+    }
     
     if (this._frameManager.hasNextFrame(fCurrent)) {
-      this.playNextFrame();
+      this.playNextFrame(fCurrent);
       return;
     };
     
@@ -75,8 +77,8 @@
     this._handlers.run(fCurrent);
   };
   
-  wp.playNextFrame = function () {
-    var mToNext = this._frameManager.getMillsToNextFrame();
+  wp.playNextFrame = function (fCurrent) {
+    var mToNext = this._frameManager.getMillsToNextFrame(fCurrent);
     this._timer.delay(mToNext, this.playFrame, this);
   };
   
@@ -126,7 +128,8 @@
   var FrameManager = function (options) {
       this._fStart = options.startFrame;
       this._fEnd = options.endFrame;
-      this._mpf = Math.floor(1000 / options.fps) || 1; // mills per frame
+      
+      this._mpf = (1000 / options.fps) || 1; // mills per frame
       this._mStart = 0;
     },
     fmp = FrameManager.prototype;
@@ -150,13 +153,26 @@
     return mCurrent - this._mStart;
   };
   
+  fmp.isValidFrame = function (fCurrent) {
+    return fCurrent >= this._fStart && fCurrent <= this._fEnd;
+  };
+  
   fmp.hasNextFrame = function (fCurrent) {
     return this._fEnd > fCurrent;
   };
   
-  fmp.getMillsToNextFrame = function () {
-    var mExcess = this.getMillsPassed() % this._mpf;
-    return this._mpf - mExcess;
+  fmp.getMillsToNextFrame = function (fCurrent) {
+    var mThisBlockExecution = 1,
+      mExcess = (this.getMillsPassed() % this._mpf) - mThisBlockExecution,
+      mThreshold = this._mpf * 2/3;
+        
+    // jump the frame if excess time is bigger than threshold
+    if (mExcess > mThreshold) {
+      return this._mpf + (this._mpf - mExcess);   
+      
+    } else {
+      return this._mpf - mExcess;
+    }
   };
   
   

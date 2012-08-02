@@ -2,9 +2,8 @@
 <head>
 <title>Wind.js - Javascript Keyframe Animation Framework</title>
 <style>
-#timeline{position:relative;width:90%;height:30px}
-.line{width:100%;height:100%;background:#eee}
-#cursor{position:absolute;left:0;top:0;width:10px;height:30px;background:#000}
+.timeline{position:relative;width:600px;height:20px;margin:10px;background:#eee}
+.cursor{position:absolute;left:0;top:0;width:10px;height:20px;background:#000}
   
 </style>
 </head>
@@ -12,9 +11,20 @@
 <div>
   <input id="framebox">
 </div>
-<div id="timeline">
-  <div class="line"></div>
-  <div id="cursor" style="left:10px;"></div>
+<div class="timeline">
+  <div id="cursor1" class="cursor" style="left:10px;"></div>
+</div>
+<div class="timeline">
+  <div id="cursor2" class="cursor" style="left:10px;"></div>
+</div>
+<div class="timeline">
+  <div id="cursor3" class="cursor" style="left:10px;"></div>
+</div>
+<div class="timeline">
+  <div id="cursor4" class="cursor" style="left:10px;"></div>
+</div>
+<div class="timeline">
+  <div id="cursor5" class="cursor" style="left:10px;"></div>
 </div>
 <script src="../../src/wind.js"></script>
 <script src="timeline.js"></script>
