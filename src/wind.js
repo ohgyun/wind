@@ -17,30 +17,37 @@
   };
 
   WindFactory.version = '0.1-dev';
-  WindFactory.api = 'http://windjs.com/api/';
   WindFactory.repository = 'https://github.com/ohgyun/wind/';
   WindFactory.toString = function () {
     return [
       'Wind.js - Javascript Keyframe Animation Library',
       '- Version: ' + this.version,
-      '- API: ' + this.api,
       '- Repository: ' + this.repository
     ].join('\n');
   };
   
+  /**
+   * @param {Object} options
+   *    fps {number} Frame per seconds (default = 30)
+   *    startFrame {number} Start frame value (default = 0)
+   *    endFrame {number} End frame value (default = 300)
+   *    loop {boolean} Play loop? (default = false)
+   *    ensureEndFrame {boolean} Play the end frame even if delayed.
+   *                            Only valid at single loop mode. (default = false)
+   */
   var Wind = function (options) {
       
       options = {
         fps: options.fps || 30,
         startFrame: options.startFrame || 0,
         endFrame: options.endFrame || 300,
-        loop: options.loop || false
+        loop: options.loop || false,
+        ensureEndFrame: options.ensureEndFrame || false
       };    
     
-      this._loop = options.loop;
-  
       this._timer = new Timer();
       this._handlers = new Handlers();
+      this._keyables = new Keyables();
       this._frameManager = new FrameManager(options);
     },
     
@@ -59,21 +66,15 @@
   wp.playFrame = function () {
     var fCurrent = this._frameManager.getFrameAtCurrentTime();
     
-    if (this._frameManager.isValidFrame(fCurrent)) {
-      this.goTo(fCurrent);
-    }
+    this.goTo(fCurrent);
     
     if (this._frameManager.hasNextFrame(fCurrent)) {
       this.playNextFrame(fCurrent);
-      return;
     };
-    
-    if (this._loop) {
-      this.play(); 
-    }
   };
   
   wp.goTo = function (fCurrent) {
+    this._keyables.run(fCurrent);
     this._handlers.run(fCurrent);
   };
   
@@ -94,10 +95,60 @@
   wp.every = function (callback, context) {
     this._handlers.add(callback, context);
   };
+
+  wp.keyable = function (action, context) {
+    var keyable = new Keyable(action, context);
+    this._keyables.add(keyable);
+    return keyable;
+  };
   
-  // TODO : add key for animating
-  wp.key = function (frame, status, easing) {
+  wp.onstart = function (callback, context) {
+    this._handlers.onstart(callback, context);
+  };
+  
+  wp.onend = function (callback, context) {
+    this._handlers.onend(callback, context);
+  };
+  
+  
+  
+  /**
+   * Group of Keyable Objects
+   */
+  var Keyables = function () {
+    this._keyables = [];
+  };
+  Keyables.prototype.add = function (keyable) {
+    this._keyables.push(keyable);
+  };
+  Keyables.prototype.run = function (frame) {
+    var len = this._keyables.length;
+    for (var i = 0; i < len; i++) {
+      this._keyables[i].run(frame); 
+    }
+  };
+  
+  /**
+   * Keyable Object
+   */
+  var Keyable = function (action, context) {
+      this._action = action;
+      this._context = context || this;
+      this._keys = [];
+    },
+    kp = Keyable.prototype;
     
+  kp.key = function (frame/*, data, data, ... */) {
+    var datas = Array.prototype.splice.call(arguments, 1);
+    this._keys[frame] = datas;
+    return this;
+  };
+  
+  kp.run = function (frame) {
+    var datas = this._keys[frame];
+    if (datas) {
+      this._action.apply(this._context, datas);  
+    }
   };
   
   
@@ -128,8 +179,11 @@
   var FrameManager = function (options) {
       this._fStart = options.startFrame;
       this._fEnd = options.endFrame;
+      this._isLoop = options.loop;
+      this._isEnsureEndFrame = options.ensureEndFrame;
       
       this._mpf = (1000 / options.fps) || 1; // mills per frame
+      this._fLength = this._fEnd - this._fStart + 1;
       this._mStart = 0;
     },
     fmp = FrameManager.prototype;
@@ -145,6 +199,14 @@
   
   fmp.getFrameAtCurrentTime = function () {
     var fPassed = this.getMillsPassed() / this._mpf;
+    
+    if (this._isLoop) {
+      fPassed = fPassed % this._fLength;
+      
+    } else if (this._isEnsureEndFrame) {
+      fPassed = fPassed > this._fEnd ? this._fEnd : fPassed; 
+    }
+    
     return Math.floor(fPassed);
   };
   
@@ -153,12 +215,8 @@
     return mCurrent - this._mStart;
   };
   
-  fmp.isValidFrame = function (fCurrent) {
-    return fCurrent >= this._fStart && fCurrent <= this._fEnd;
-  };
-  
   fmp.hasNextFrame = function (fCurrent) {
-    return this._fEnd > fCurrent;
+    return this._isLoop || this._fEnd > fCurrent;
   };
   
   fmp.getMillsToNextFrame = function (fCurrent) {
@@ -181,6 +239,8 @@
    * Callback Handlers
    */
   var Handlers = function () {
+    this._onstart = [];
+    this._onend = [];
     this._objs = [];
   };
   
@@ -192,6 +252,20 @@
   
   Handlers.prototype.add = function (handler, context) {
     this._objs.push({
+      handler: handler,
+      context: context
+    });
+  };
+  
+  Handlers.prototype.onstart = function (handler, context) {
+    this._onstart.push({
+      handler: handler,
+      context: context
+    });
+  };
+  
+  Handlers.prototype.onend = function (handler, context) {
+    this._onend.push({
       handler: handler,
       context: context
     });

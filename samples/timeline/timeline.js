@@ -3,29 +3,42 @@ var START_FRAME = 0,
 
 var wind = Wind({
   fps: 30,
-  loop: true,
+  loop: false,
   startFrame: START_FRAME,
-  endFrame: END_FRAME
+  endFrame: END_FRAME,
+  ensureEndFrame: true
 });
 
 wind.every(function (frame) {
   document.getElementById('framebox').value = frame;
 });
 
+// move cursor
 wind.every(function (frame) {
   var cursors = [ 'cursor1', 'cursor2', 'cursor3', 'cursor4', 'cursor5' ];
   for (var i = 0; i < cursors.length; i++) {
     var c = document.getElementById(cursors[i]);
-    c.style.left = frame + 'px';
+    c.style.left = (frame*10) + 'px';
   }
 });
 
+// long time script interruption
 wind.every(function (frame) {
-  if (frame < 3) console.log('---', frame);
-  // /(A+A+)+B/.test("AAAAAAAAAAAAAAAAAAAAA");
+  // long time script
+  ///(A+A+)+B/.test("AAAAAAAAAAAAAAAAAAAAAA");
 });
 
+// played frame log
+var played = [];
+wind.every(function (frame) {
+  played.push(frame);
+  if (frame === END_FRAME) {
+    console.log('played frame: ', played);
+    played = []; 
+  }
+});
 
+// execution timing log
 wind.every(function (frame) {
   if (frame === END_FRAME) {
     var now = new Date().getTime();
