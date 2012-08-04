@@ -1,8 +1,8 @@
 var START_FRAME = 0,
-  END_FRAME = 24;
+  END_FRAME = 48;
 
 var wind = Wind({
-  fps: 24,
+  fps: 12,
   loop: false,
   startFrame: START_FRAME,
   endFrame: END_FRAME,
@@ -10,7 +10,7 @@ var wind = Wind({
 });
 
 var paper = Raphael('box', 400, 400),
-  ball = paper.circle(200, 360, 40);
+  ball = paper.ellipse(200, 360, 40, 40);
 
 wind.onstart(function () {
   console.log('Animation Start');
@@ -26,10 +26,26 @@ wind.keyable(function (attr) {
   .key(0, {
     cy: 360
   })
-  .key(12, {
-    cy: 340
+  .key(1, {
+    
+  })
+  .key(23, {
+    cy: 160
+  })
+  .key(24, {
+    ry: 30,
+    cy: 150
+  })
+  .key(25, {
+    cy: 160
   });
   
 // TODO: execute handler when start and end
 
+//wind.goTo(22);
 wind.play();
+
+// TODO: 커서로 키를 움직일 수 있는 툴박스 FrameNavigator
+//   right = 프레임 이동
+//   shift + right = 키 이동
+
